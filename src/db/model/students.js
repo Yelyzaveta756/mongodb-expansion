@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+// Перевірка того що ми зберігаємо
 
  const studentsSchema = new Schema(
    {
