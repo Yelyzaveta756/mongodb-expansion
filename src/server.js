@@ -3,13 +3,15 @@
 import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
-import studentsRouter from './routers/students.js'; // Імпортуємо роутер
+import { studentsRouter } from './routers/students.js';
+import { authRouter } from './routers/auth.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { env } from './utils/env.js';
 
-const PORT = Number(env('PORT', '3000'));
+const PORT = Number(env('PORT', '3001'));
 
 export const setupServer = () => {
   const app = express();
@@ -23,6 +25,7 @@ export const setupServer = () => {
   //   }),
   // );
   app.use(cors());
+  app.use(cookieParser());
 
   app.use(
     pino({
@@ -32,12 +35,12 @@ export const setupServer = () => {
     }),
   );
 
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'Hello World!',
-    });
-  });
-
+  // app.get('/', (req, res) => {
+  //   res.json({
+  //     message: 'Hello World!',
+  //   });
+  // });
+  app.use('/auth', authRouter);
   app.use(studentsRouter); // Додаємо роутер до app як middleware
 
   app.use('*', notFoundHandler);

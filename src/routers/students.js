@@ -11,15 +11,17 @@ import {
   import { validateBody } from '../middlewares/validateBody.js';
   import { isValidId } from '../middlewares/isValidId.js';
   import { createStudentSchema, updateStudentSchema } from '../validation/students.js';
+  import { authenticate } from '../middlewares/authenticate.js';
 
-const router = Router();
+export const studentsRouter = Router();
 
-router.get('/students', validateBody(createStudentSchema), ctrlWrapper(getStudentsController));
-router.get('/students/:studentId', isValidId, validateBody(createStudentSchema), ctrlWrapper(getStudentByIdController));
-router.post('/students', validateBody(updateStudentSchema), ctrlWrapper(createStudentController));
-router.delete('/students/:studentId', isValidId, ctrlWrapper(deleteStudentController));
-router.put('/students/:studentId', isValidId, validateBody(createStudentSchema), ctrlWrapper(updateStudentController));
-router.patch('/students/:studentId', isValidId, validateBody(updateStudentSchema), ctrlWrapper(patchStudentCollector));
+studentsRouter.use(authenticate);
 
-export default router;
+studentsRouter.get('/students', ctrlWrapper(getStudentsController));
+studentsRouter.get('/students/:studentId', isValidId, ctrlWrapper(getStudentByIdController));
+studentsRouter.post('/students', validateBody(createStudentSchema), ctrlWrapper(createStudentController));
+studentsRouter.delete('/students/:studentId', isValidId, ctrlWrapper(deleteStudentController));
+studentsRouter.put('/students/:studentId', isValidId, validateBody(createStudentSchema), ctrlWrapper(updateStudentController));
+studentsRouter.patch('/students/:studentId', isValidId, validateBody(updateStudentSchema), ctrlWrapper(patchStudentCollector));
+
 

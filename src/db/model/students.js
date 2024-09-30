@@ -25,6 +25,11 @@ import { Schema, model } from 'mongoose';
        required: true,
        default: false,
      },
+     userId: {
+      type: Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+  }
    },
    {
      timestamps: true,
