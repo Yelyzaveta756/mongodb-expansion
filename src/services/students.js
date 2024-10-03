@@ -29,8 +29,10 @@ export const getAllStudents = async ({
   if (filter.minAvgMark) {
     studentsQuery.where('avgMark').gte(filter.minAvgMark);
   }
+  if(userId) {
+    studentsQuery.where('userId').equals(userId);
+  }
 
-  studentsQuery.where('userId').equals(userId);
 
   // Другий пункт !!!
   /* Замість цього коду */
@@ -69,7 +71,7 @@ const [studentsCount, students] = await Promise.all([
   };
 };
 
-export const getStudentById = async (studentId,userId) => {
+export const getStudentById = async (studentId, userId) => {
     const contact = StudentsCollection.findone({_id: studentId, userId});
     return contact;
 };

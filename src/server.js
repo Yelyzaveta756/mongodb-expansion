@@ -10,6 +10,7 @@ import { authRouter } from './routers/auth.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { env } from './utils/env.js';
+import { UPLOAD_DIR } from './constants/index.js';
 
 const PORT = Number(env('PORT', '3001'));
 
@@ -42,6 +43,7 @@ export const setupServer = () => {
   // });
   app.use('/auth', authRouter);
   app.use(studentsRouter); // Додаємо роутер до app як middleware
+  app.use('/uploads', express.static(UPLOAD_DIR));
 
   app.use('*', notFoundHandler);
 

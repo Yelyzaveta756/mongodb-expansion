@@ -12,6 +12,8 @@ import { randomBytes } from "crypto";
 import { UsersCollection } from "../db/model/users.js";
 import { SessionsCollection } from "../db/model/session.js";
 import { FIFTEEN_MINUTES, ONE_DAY } from "../constants/index.js";
+import { createJwtToken } from "../utils/jwt.js";
+import { verifyToken } from "../utils/jwt.js";
 
 const createSession = ()=> {
     const accessToken = randomBytes(30).toString("base64");
@@ -34,6 +36,16 @@ export const registerUser = async (payload) => {
 
   const encryptedPassword = await bcrypt.hash(password, 10);
 
+  const token = createJwtToken(email);
+
+  const verifyEmail = {
+    to: email,
+    subject: "Verify email",
+    html: `<a target="_blank" href="http://localhost:3001/auth/verify?token=${token}">Click here to verify</a>`
+  };
+
+  await sendEmail(verifyEmail);
+
   return await UsersCollection.create({
     ...payload,
     password: encryptedPassword,
@@ -47,6 +59,7 @@ export const registerUser = async (payload) => {
     if (!user) {
       throw createHttpError(404, 'User not found');
     }
+
     const isEqual = await bcrypt.compare(password, user.password); // Порівнюємо хеші паролів
 
     if (!isEqual) {
@@ -101,6 +114,7 @@ export const registerUser = async (payload) => {
     if (!user) {
       throw createHttpError(404, 'User not found');
     }
+
     const resetToken = jwt.sign(
       {
         sub: user._id,
@@ -112,10 +126,15 @@ export const registerUser = async (payload) => {
       },
     );
 
+    // const decodeToken =jwt.decode(resetToken);
+    // console.log(decodeToken);
+
     const resetPasswordTemplatePath = path.join(
       TEMPLATES_DIR,
       'reset-password-email.html',
-    );
+    ); // посилання до html файлу
+
+    // console.log(resetPasswordTemplatePath);
 
     const templateSource = (
       await fs.readFile(resetPasswordTemplatePath)
@@ -134,3 +153,44 @@ export const registerUser = async (payload) => {
       html,
     });
   };
+
+  export const resetPassword = async (payload) => {
+    let entries;
+
+    try {
+      entries = jwt.verify(payload.token, env('JWT_SECRET'));
+    } catch (err) {
+      if (err instanceof Error) throw createHttpError(401, err.message);
+      throw err;
+    }
+
+    const user = await UsersCollection.findOne({
+      email: entries.email,
+      _id: entries.sub,
+    });
+
+    if (!user) {
+      throw createHttpError(404, 'User not found');
+    }
+
+    const encryptedPassword = await bcrypt.hash(payload.password, 10);
+
+    await UsersCollection.updateOne(
+      { _id: user._id },
+      { password: encryptedPassword },
+    );
+  };
+
+  export const verify = async token => {
+    const {data, error} = verifyToken(token);
+    if(error) {
+        throw createHttpError(401, "Token invalid");
+    }
+
+    const user = await UsersCollection.findOne({email: data.email});
+    if(user.verify) {
+        throw createHttpError(401, "Email already verify");
+    }
+
+    await UsersCollection.findOneAndUpdate({_id: user._id}, {verify: true});
+};

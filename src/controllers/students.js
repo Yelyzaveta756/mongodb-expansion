@@ -2,6 +2,9 @@ import { getAllStudents, getStudentById, createStudent, deleteStudent, updateStu
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+import { env } from '../utils/env.js';
 
 export const getStudentsController = async (req, res) => {
   //Перший пункт: отримати нормальні значення page та perPage, тобто перетворити в числові значення завдяки функції parsePaginationParams (utils)
@@ -134,7 +137,20 @@ if (!student) {
     export const patchStudentCollector = async(req, res, next) => {
       const { studentId } = req.params;
       const {_id: userId} = req.user;
-      const result = await updateStudent(studentId, userId, req.body);
+      const photo = req.file;
+      console.log(photo);
+
+      let photoUrl;
+
+      if (photo) {
+        if (env('ENABLE_CLOUDINARY') === 'true') {
+          photoUrl = await saveFileToCloudinary(photo);
+        } else {
+          photoUrl = await saveFileToUploadDir(photo);
+        }
+      }
+
+      const result = await updateStudent(studentId, userId, {...req.body, photo: photoUrl});
 
       if (!result) {
         next(createHttpError(404, 'Student not found'));
