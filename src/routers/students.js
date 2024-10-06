@@ -16,7 +16,7 @@ import {
 
 export const studentsRouter = Router();
 
-// studentsRouter.use(authenticate);
+studentsRouter.use(authenticate);
 
 studentsRouter.get('/students', ctrlWrapper(getStudentsController));
 studentsRouter.get('/students/:studentId', isValidId, ctrlWrapper(getStudentByIdController));
