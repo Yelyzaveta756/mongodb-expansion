@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
-import { registerUserSchema, loginUserSchema, requestResetEmailSchema, resetPasswordSchema } from '../validation/auth.js';
+import { registerUserSchema, loginUserSchema, requestResetEmailSchema, resetPasswordSchema, loginWithGoogleOAuthSchema } from '../validation/auth.js';
 import {
     registerUserController,
     loginUserController,
@@ -8,7 +8,10 @@ import {
     refreshUserSessionController,
     requestResetEmailController,
     resetPasswordController,
-    verifyController } from '../controllers/auth.js';
+    verifyController,
+    getGoogleOAuthUrlController,
+    loginWithGoogleController
+ } from '../controllers/auth.js';
 import { validateBody } from '../middlewares/validateBody.js';
 
 export const authRouter = Router();
@@ -20,6 +23,8 @@ authRouter.post('/refresh', ctrlWrapper(refreshUserSessionController));
 authRouter.post('/request-reset-email', validateBody(requestResetEmailSchema), ctrlWrapper(requestResetEmailController));
 authRouter.post('/reset-password', validateBody(resetPasswordSchema), ctrlWrapper(resetPasswordController));
 authRouter.post('/verify', ctrlWrapper(verifyController));
+authRouter.get('/get-oauth-url', ctrlWrapper(getGoogleOAuthUrlController)); // отримання посилання авторизації.
+authRouter.post('/confirm-google-auth',  validateBody(loginWithGoogleOAuthSchema), ctrlWrapper(loginWithGoogleController)); // авторизація
 
 
 

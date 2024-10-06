@@ -14,6 +14,7 @@ import { SessionsCollection } from "../db/model/session.js";
 import { FIFTEEN_MINUTES, ONE_DAY } from "../constants/index.js";
 import { createJwtToken } from "../utils/jwt.js";
 import { verifyToken } from "../utils/jwt.js";
+import { getFullNameFromGoogleTokenPayload, validateCode } from "../utils/googleOAuth2.js";
 
 const createSession = ()=> {
     const accessToken = randomBytes(30).toString("base64");
@@ -193,4 +194,29 @@ export const registerUser = async (payload) => {
     }
 
     await UsersCollection.findOneAndUpdate({_id: user._id}, {verify: true});
+
+};
+
+export const loginOrSignupWithGoogle = async (code) => {
+  const loginTicket = await validateCode(code); // отримує id_token для аутентифікації через Google.
+  const payload = loginTicket.getPayload(); // повертає код, який використовується для отримання інформації про користувача.
+  if (!payload) throw createHttpError(401);
+
+  let user = await UsersCollection.findOne({ email: payload.email }); // знаходимо користувача по email
+  if (!user) { // перевірка чи такий користувач є
+    const password = await bcrypt.hash(randomBytes(10), 10);
+    user = await UsersCollection.create({ // створюємо нового користувача якщо наявного немає
+      email: payload.email,
+      name: getFullNameFromGoogleTokenPayload(payload),
+      password,
+      role: 'parent',
+    });
+  }
+
+  const newSession = createSession(); // створення сесії
+
+  return await SessionsCollection.create({
+    userId: user._id,
+    ...newSession,
+  });
 };
